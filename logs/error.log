@@ -4,3 +4,25 @@
 2026/03/05 07:17:36 [error] 21406#0: *4 open() "/data/data/com.termux/files/home/nginx-portable/html/www/profile/api.php" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /www/profile/api.php?action=get_ref_doctors HTTP/1.1", host: "localhost:8080", referrer: "http://localhost:8080/www/profile/"
 2026/03/05 07:17:36 [error] 21407#0: *5 open() "/data/data/com.termux/files/home/nginx-portable/html/www/profile/api.php" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /www/profile/api.php?action=get_marketing HTTP/1.1", host: "localhost:8080", referrer: "http://localhost:8080/www/profile/"
 2026/03/05 07:17:39 [error] 21407#0: *5 "/data/data/com.termux/files/home/nginx-portable/html/www/index.html" is not found (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /www/ HTTP/1.1", host: "localhost:8080"
+2026/03/05 17:36:51 [error] 21403#0: *10 open() "/data/data/com.termux/files/home/nginx-portable/html/favicon.ico" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:8080", referrer: "http://localhost:8080/"
+2026/03/05 19:26:16 [emerg] 7973#0: bind() to 0.0.0.0:8080 failed (98: Address already in use)
+2026/03/05 19:26:16 [emerg] 7973#0: bind() to 0.0.0.0:8080 failed (98: Address already in use)
+2026/03/05 19:26:16 [emerg] 7973#0: bind() to 0.0.0.0:8080 failed (98: Address already in use)
+2026/03/05 19:26:16 [emerg] 7973#0: bind() to 0.0.0.0:8080 failed (98: Address already in use)
+2026/03/05 19:26:16 [emerg] 7973#0: bind() to 0.0.0.0:8080 failed (98: Address already in use)
+2026/03/05 19:26:16 [emerg] 7973#0: still could not bind()
+2026/03/05 19:34:36 [error] 9950#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/hls/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET /hls/ HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:39:53 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/hls/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET /hls/ HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:39:59 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:01 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:03 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:09 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:55 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:56 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:40:59 [error] 10634#0: *1 directory index of "/data/data/com.termux/files/home/nginx-portable/html/" is forbidden, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost:8080"
+2026/03/05 19:50:05 [emerg] 12583#0: invalid event type "poll" in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:15
+2026/03/05 19:51:01 [emerg] 12695#0: the same path name "/data/data/com.termux/files/home/nginx-portable/html/hls" used in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151 and in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151
+2026/03/05 21:57:35 [emerg] 8737#0: the same path name "/data/data/com.termux/files/home/nginx-portable/html/hls/live" used in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151 and in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151
+2026/03/05 22:02:07 [emerg] 9657#0: the same path name "/data/data/com.termux/files/home/nginx-portable/html/hls/live" used in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151 and in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:151
+2026/03/05 22:04:10 [emerg] 10028#0: unknown directive "flv_live" in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:342
+2026/03/05 22:05:03 [emerg] 10645#0: unknown directive "stub_status" in /data/data/com.termux/files/home/nginx-portable/conf/nginx.conf:191

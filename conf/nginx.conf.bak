@@ -1,0 +1,456 @@
+# ===========================================
+# Nginx + RTMP + PHP Full Configuration
+# ===========================================
+
+worker_processes auto;
+daemon off;
+pcre_jit on;
+
+error_log /data/data/com.termux/files/home/nginx-portable/logs/error.log warn;
+pid /data/data/com.termux/files/home/nginx-portable/logs/nginx.pid;
+
+events {
+    worker_connections 1024;
+    multi_accept on;
+    # use poll;
+}
+
+# ===========================================
+# RTMP Configuration
+# ===========================================
+rtmp {
+    server {
+        listen 1935;
+        chunk_size 4096;
+        buflen 1s;
+        ping 30s;
+        ping_timeout 10s;
+        timeout 60s;
+        drop_idle_publisher 30s;
+
+        application live {
+            live on;
+            record off;
+            allow publish all;
+            allow play all;
+            interleave on;
+            wait_key on;
+            wait_video on;
+            sync 300ms;
+
+            hls on;
+            hls_path /data/data/com.termux/files/home/nginx-portable/html/hls/live;
+            hls_fragment 3s;
+            hls_playlist_length 60s;
+            hls_sync 100ms;
+            hls_continuous on;
+            hls_cleanup on;
+            hls_nested on;
+
+            dash on;
+            dash_path /data/data/com.termux/files/home/nginx-portable/html/dash/live;
+            dash_fragment 3s;
+            dash_playlist_length 60s;
+            dash_cleanup on;
+            dash_nested on;
+        }
+
+        application rec {
+            live on;
+            record all;
+            record_path /data/data/com.termux/files/home/nginx-portable/recordings;
+            record_unique on;
+            record_suffix _%Y%m%d_%H%M%S.flv;
+            record_max_size 500M;
+        }
+
+        application restream {
+            live on;
+            record off;
+        }
+
+        application private {
+            live on;
+            record off;
+            hls on;
+            hls_path /data/data/com.termux/files/home/nginx-portable/html/hls/private;
+            hls_fragment 3s;
+            hls_playlist_length 30s;
+            hls_nested on;
+        }
+    }
+}
+
+# ===========================================
+# HTTP Configuration
+# ===========================================
+http {
+    # -----------------------------------------
+    # Basic Settings
+    # -----------------------------------------
+    include mime.types;
+    default_type application/octet-stream;
+    charset utf-8;
+    
+    # -----------------------------------------
+    # Performance Settings
+    # -----------------------------------------
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    server_tokens off;
+    
+    # Buffer settings
+    client_body_buffer_size 128k;
+    client_max_body_size 500M;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 16k;
+    
+    # Timeouts
+    client_body_timeout 60s;
+    client_header_timeout 60s;
+    send_timeout 60s;
+    
+    # -----------------------------------------
+    # Logging
+    # -----------------------------------------
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+    
+    log_format streaming '$remote_addr [$time_local] '
+                         '$request_method $uri $status '
+                         '$bytes_sent $request_time';
+    
+    access_log /data/data/com.termux/files/home/nginx-portable/logs/access.log main;
+    
+    # -----------------------------------------
+    # Gzip Compression
+    # -----------------------------------------
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_min_length 256;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/ld+json
+        application/manifest+json
+        application/rss+xml
+        application/vnd.geo+json
+        application/vnd.ms-fontobject
+        application/x-font-ttf
+        application/x-web-app-manifest+json
+        application/xhtml+xml
+        application/xml
+        application/vnd.apple.mpegurl
+        font/opentype
+        image/bmp
+        image/svg+xml
+        image/x-icon
+        text/cache-manifest
+        text/css
+        text/plain
+        text/vcard
+        text/vnd.rim.location.xloc
+        text/vtt
+        text/x-component
+        text/x-cross-domain-policy
+        text/xml;
+    
+    # -----------------------------------------
+    # FastCGI Cache (optional)
+    # -----------------------------------------
+    # fastcgi_cache_path /data/data/com.termux/files/home/nginx-portable/cache
+    #     levels=1:2
+    #     keys_zone=PHPCACHE:10m
+    #     inactive=60m
+    #     max_size=100m;
+    # fastcgi_cache_key "$scheme$request_method$host$request_uri";
+    
+    # -----------------------------------------
+    # Main HTTP Server
+    # -----------------------------------------
+    server {
+        listen 8080 default_server;
+        server_name localhost _;
+        
+        root /data/data/com.termux/files/home/nginx-portable/html;
+        index index.php index.html index.htm;
+        
+        # Access log for this server
+        access_log /data/data/com.termux/files/home/nginx-portable/logs/http-access.log streaming;
+        
+        # -----------------------------------------
+        # Security Headers
+        # -----------------------------------------
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        
+        # -----------------------------------------
+        # Root Location
+        # -----------------------------------------
+        location / {
+            try_files $uri $uri/ /index.php?$query_string;
+        }
+        
+        # -----------------------------------------
+        # PHP Processing
+        # -----------------------------------------
+        location ~ \.php$ {
+            try_files $uri =404;
+            fastcgi_split_path_info ^(.+\.php)(/.+)$;
+            fastcgi_pass unix:/data/data/com.termux/files/home/nginx-portable/php/var/run/php-fpm.sock;
+            fastcgi_index index.php;
+            
+            # FastCGI params
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+            fastcgi_param QUERY_STRING $query_string;
+            fastcgi_param REQUEST_METHOD $request_method;
+            fastcgi_param CONTENT_TYPE $content_type;
+            fastcgi_param CONTENT_LENGTH $content_length;
+            fastcgi_param SCRIPT_NAME $fastcgi_script_name;
+            fastcgi_param REQUEST_URI $request_uri;
+            fastcgi_param DOCUMENT_URI $document_uri;
+            fastcgi_param DOCUMENT_ROOT $document_root;
+            fastcgi_param SERVER_PROTOCOL $server_protocol;
+            fastcgi_param GATEWAY_INTERFACE CGI/1.1;
+            fastcgi_param SERVER_SOFTWARE nginx/$nginx_version;
+            fastcgi_param REMOTE_ADDR $remote_addr;
+            fastcgi_param REMOTE_PORT $remote_port;
+            fastcgi_param SERVER_ADDR $server_addr;
+            fastcgi_param SERVER_PORT $server_port;
+            fastcgi_param SERVER_NAME $server_name;
+            fastcgi_param REDIRECT_STATUS 200;
+            
+            include fastcgi_params;
+            
+            # FastCGI buffer settings
+            fastcgi_buffer_size 128k;
+            fastcgi_buffers 4 256k;
+            fastcgi_busy_buffers_size 256k;
+            fastcgi_temp_file_write_size 256k;
+            
+            # Timeouts
+            fastcgi_connect_timeout 60s;
+            fastcgi_send_timeout 300s;
+            fastcgi_read_timeout 300s;
+            
+            # Cache (optional)
+            # fastcgi_cache PHPCACHE;
+            # fastcgi_cache_valid 200 60m;
+            # fastcgi_cache_bypass $http_pragma $http_authorization;
+        }
+        
+        # -----------------------------------------
+        # HLS Streaming
+        # -----------------------------------------
+        location /hls {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            
+            alias /data/data/com.termux/files/home/nginx-portable/html/hls;
+            
+            # Disable cache for live streams
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Pragma "no-cache";
+            add_header Expires "0";
+            
+            # CORS headers
+            add_header Access-Control-Allow-Origin "*" always;
+            add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Origin, Content-Type, Accept" always;
+            
+            # Handle preflight
+            if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, OPTIONS";
+                add_header Access-Control-Max-Age 1728000;
+                add_header Content-Type "text/plain charset=UTF-8";
+                add_header Content-Length 0;
+                return 204;
+            }
+        }
+        
+        # -----------------------------------------
+        # DASH Streaming
+        # -----------------------------------------
+        location /dash {
+            types {
+                application/dash+xml mpd;
+                video/mp4 m4v mp4 m4s;
+            }
+            
+            alias /data/data/com.termux/files/home/nginx-portable/html/dash;
+            
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
+            add_header Access-Control-Allow-Origin "*" always;
+        }
+        
+        # -----------------------------------------
+        # RTMP Statistics
+        # -----------------------------------------
+        location /stat {
+            rtmp_stat all;
+            rtmp_stat_stylesheet stat.xsl;
+            add_header Refresh "3; $request_uri";
+        }
+        
+        location /stat.xsl {
+            alias /data/data/com.termux/files/home/nginx-portable/html/stat.xsl;
+        }
+        
+        # -----------------------------------------
+        # RTMP Control API
+        # -----------------------------------------
+        location /control {
+            rtmp_control all;
+            
+            # Restrict access (uncomment for security)
+            # allow 127.0.0.1;
+            # deny all;
+        }
+        
+        # -----------------------------------------
+        # Recordings Access
+        # -----------------------------------------
+        location /recordings {
+            alias /data/data/com.termux/files/home/nginx-portable/recordings;
+            autoindex on;
+            autoindex_exact_size off;
+            autoindex_localtime on;
+            
+            # Allow video seeking
+            mp4;
+            mp4_buffer_size 1m;
+            mp4_max_buffer_size 5m;
+        }
+        
+        # -----------------------------------------
+        # FLV Live Streaming (HTTP-FLV)
+        # -----------------------------------------
+        location /live {
+            flv_live on;
+            chunked_transfer_encoding on;
+            
+            add_header Access-Control-Allow-Origin "*" always;
+            add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+        }
+        
+        # -----------------------------------------
+        # API Directory
+        # -----------------------------------------
+        location /api {
+            alias /data/data/com.termux/files/home/nginx-portable/html/api;
+            try_files $uri $uri/ /api/index.php?$query_string;
+            
+            location ~ \.php$ {
+                fastcgi_pass unix:/data/data/com.termux/files/home/nginx-portable/php/var/run/php-fpm.sock;
+                fastcgi_param SCRIPT_FILENAME $request_filename;
+                include fastcgi_params;
+            }
+        }
+        
+        # -----------------------------------------
+        # Uploads Directory
+        # -----------------------------------------
+        location /uploads {
+            alias /data/data/com.termux/files/home/nginx-portable/html/uploads;
+            client_max_body_size 500M;
+            
+            # Deny PHP execution in uploads
+            location ~ \.php$ {
+                deny all;
+            }
+        }
+        
+        # -----------------------------------------
+        # Static Files Caching
+        # -----------------------------------------
+        location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg|eot)$ {
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+            access_log off;
+        }
+        
+        # -----------------------------------------
+        # Deny Hidden Files
+        # -----------------------------------------
+        location ~ /\. {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+        
+        # -----------------------------------------
+        # Favicon & Robots
+        # -----------------------------------------
+        location = /favicon.ico {
+            access_log off;
+            log_not_found off;
+        }
+        
+        location = /robots.txt {
+            access_log off;
+            log_not_found off;
+        }
+        
+        # -----------------------------------------
+        # Status Page (for monitoring)
+        # -----------------------------------------
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            # allow 127.0.0.1;
+            # deny all;
+        }
+        
+        # -----------------------------------------
+        # Error Pages
+        # -----------------------------------------
+        error_page 404 /404.html;
+        error_page 500 502 503 504 /50x.html;
+        
+        location = /404.html {
+            root /data/data/com.termux/files/home/nginx-portable/html/errors;
+            internal;
+        }
+        
+        location = /50x.html {
+            root /data/data/com.termux/files/home/nginx-portable/html/errors;
+            internal;
+        }
+    }
+
+    # -----------------------------------------
+    # HTTPS Server (Optional - Certificate Required)
+    # -----------------------------------------
+    # server {
+    #     listen 8443 ssl http2;
+    #     server_name localhost;
+    #     
+    #     ssl_certificate /data/data/com.termux/files/home/nginx-portable/ssl/cert.pem;
+    #     ssl_certificate_key /data/data/com.termux/files/home/nginx-portable/ssl/key.pem;
+    #     
+    #     ssl_protocols TLSv1.2 TLSv1.3;
+    #     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    #     ssl_prefer_server_ciphers on;
+    #     ssl_session_cache shared:SSL:10m;
+    #     ssl_session_timeout 1d;
+    #     
+    #     # Include same locations as HTTP server
+    #     root /data/data/com.termux/files/home/nginx-portable/html;
+    #     index index.php index.html;
+    #     
+    #     # ... (copy locations from HTTP server)
+    # }
+}
