@@ -1,0 +1,8 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+MYSQL_DIR="$HOME/nginx-portable/mysql"
+export LD_LIBRARY_PATH="$MYSQL_DIR/lib:$LD_LIBRARY_PATH"
+
+exec "$MYSQL_DIR/bin/mysql" \
+    --socket="$MYSQL_DIR/run/mysqld.sock" \
+    "$@"
